@@ -1,0 +1,233 @@
+import shutil
+import os
+
+class Expensetracker:
+
+    def __init__(self,filename="expense_data"):
+        self.filename=filename
+        if not os.path.exists(self.filename):
+            os.makedirs(self.filename)
+    
+    def add_expense(self):
+         print("ADD EXPENSE")
+         date=input("ENTER DATE FOR ADDING (YYYY-MM-DD)")
+         category = input("ENTER CATEGORY FOR ADDING")
+         amount = input ("ENTER AMOUNT FOR ADDING")
+         description = input("ENTER DISCRIPTRION FOR ADDING")
+
+         folder_path = os.path.join(self.filename,date,category,amount)
+         os.makedirs(folder_path,exist_ok= True)
+
+         file_path = os.path.join(folder_path,"desc.txt")
+         with open(file_path,"a") as f : 
+             f.write (description +"\n")
+             print("EXPENSE IS ADDED SUCESSFULY")
+     
+    def show_all(self):
+        print("SHOWING EXPENSE")
+        for date in os.listdir(self.filename):
+            date_path=os.path.join(self.filename,date)
+            for category in os.listdir(date_path):
+                cat_path = os.path.join( date_path,category)
+                for amount in os.listdir(cat_path):
+                    amount_path= os.path.join(cat_path,amount)
+                    desc_file = os.path.join(amount_path,"desc.txt")
+                    if os.path.exists(desc_file):
+                        with open(desc_file)as f:
+                            descs=f.read().splitlines()
+                            for d in descs:
+                                print(f"{date} - {category} - {amount} - {d}")
+
+
+    def filter_expense(self):
+        print("FOR SHOWING EXPENSE")
+        Date=input("ENTER DATE FOR VIEW EXPENSE (YYYY-MM-DD)")
+        categ=input("ENTER CATEGORY FOR VIEW EXPENSE")
+
+        date_found=False
+        categ_found=False
+
+
+        for date in os.listdir(self.filename):
+            if(Date==date):
+                date_found=True
+                date_path=os.path.join(self.filename,date)
+                for category in os.listdir(date_path):
+                    if(categ == category):
+                        categ_found = True
+                        cat_path = os.path.join(date_path,category)
+                        for amount in os.listdir(cat_path):
+                            amt_path = os.path.join (cat_path,amount)
+                            desc_file = os.path.join (amt_path, "desc.txt")
+                            if os.path.exists (desc_file):
+                                with open(desc_file)as f :
+                                    descs = f.read().splitlines() 
+                                    for d in descs:
+                                        print(f"{date}-{category}-{amount}-{d}")
+        if not date_found:
+            print("date not found ")
+        elif not categ_found:
+            print("category not found")
+            
+    def edit_expense(self):
+        print("EDIT EXPENSE")
+        Date = input("ENTER DATE (YYYY-MM-DD): ")
+        categ = input("ENTER CATEGORY: ")
+        old_amount = input("ENTER OLD AMOUNT: ")
+        new_amount = input("ENTER NEW AMOUNT (leave blank to keep same): ")
+        new_desc = input("ENTER NEW DESCRIPTION: ")
+
+        if new_amount.strip() == "":
+            new_amount = old_amount
+
+        date_found = False
+        categ_found = False
+        amount_found = False
+
+        for date in os.listdir(self.filename):
+            if date == Date:
+                date_found = True
+                date_path = os.path.join(self.filename, date)
+
+                for category in os.listdir(date_path):
+                    if category == categ:
+                        categ_found = True
+                        cat_path = os.path.join(date_path, category)
+
+                        for amount in os.listdir(cat_path):
+                            if amount == old_amount:
+                                amount_found = True
+
+                                old_path = os.path.join(cat_path, old_amount)
+                                new_path = os.path.join(cat_path, new_amount)
+
+                                # rename amount folder
+                                if old_amount != new_amount:
+                                    os.rename(old_path, new_path)
+
+                                desc_file = os.path.join(new_path, "desc.txt")
+                                with open(desc_file, "w") as f:
+                                    f.write(new_desc + "\n")
+
+                                print("EXPENSE UPDATED SUCCESSFULLY")
+
+        if not date_found:
+            print("DATE NOT FOUND")
+        elif not categ_found:
+            print("CATEGORY NOT FOUND")
+        elif not amount_found:
+            print("AMOUNT NOT FOUND")
+
+    def delete_expense(self):
+        print("FOR DELETE EXPENSE")
+
+        Date=input("ENTER DATE FOR DELETE EXPENSE(YYYY-MM-DD)")
+        date_path=os.path.join(self.filename,Date)
+
+        if os.path.exists(date_path):
+            shutil.rmtree(date_path)
+            print("Deleted succesfuly")
+        else:
+            print("Date not found")
+
+    def search_total_expense_per_month(self):
+        print("EXPENSE PER MONTH")
+        monthly_total={}
+        for date in os.listdir(self.filename):
+            month="-".join(date.split("-")[:2])
+            month_total=0
+
+            date_path=os.path.join(self.filename,date)
+            for category in os.listdir(date_path):
+                cat_path = os.path.join( date_path,category)
+                for amount in os.listdir(cat_path):
+                    amount_path= os.path.join(cat_path,amount)
+                    desc_file = os.path.join(amount_path,"desc.txt")
+                    if os.path.exists(desc_file):
+                        with open(desc_file)as f:
+                            count=len(f.read().splitlines())
+                            
+                            monthly_total[month]=monthly_total.get(month,0)+float(amount)*count
+        print("Total expenses per month")
+        for m,total  in monthly_total.items():
+            print(f"{m}-{total}")
+
+                            
+    def highest_expense_category(self):
+        print("HIGH EXPENSE CATEGORY")
+        category_total={}
+
+        for date in os.listdir(self.filename):
+            date_path=os.path.join(self.filename,date)
+
+            for category in os.listdir(date_path):
+                cat_path=os.path.join(date_path,category)
+
+                cat_sum=0
+                for amount in os.listdir(cat_path):
+                    amt_path=os.path.join(cat_path,amount)
+                    desc_file=os.path.join(amt_path,"desc.txt")
+                    if os.path.exists(desc_file):
+                        with open(desc_file,"r") as f:
+                            count=len(f.read().splitlines())
+                            cat_sum+=float(amount)*count
+                category_total[category] = category_total.get(category, 0) + cat_sum
+
+        if category_total:
+            high_cat=max(category_total,key=category_total.get)
+            print(f"highest expense category {high_cat}-{category_total[high_cat]} ")
+
+def main():
+    tracker = Expensetracker()
+
+    while True:
+        print("""IF YOU ARE HUNGRY, MAKES YOU ANGRY \n
+              COME TO OUR EXPENSE TRACKER""")
+        
+        print("ENTER YOUR DESIRE")
+        print("1 = ADD EXPENSE")
+        print("2 = SHOW ALL EXPENSE")
+        print("3 = FILTER BY DATE AND CATEGORY")
+        print("4 = EDITE EXPENSE")
+        print("5 = DELETE EXPENSE")
+        print("6 = VIEW TOTAL EXPENSE PER MONTH")
+        print("7 = HIGH EXPENSE CATEGORY")
+        print("8 = FOR EXIT")
+
+        try:
+            choice = int(input("ENTER YOUR CHOICE: "))
+        except ValueError:
+            print("Invalid input, please enter a number.")
+            continue
+
+
+        if(choice==1):
+            tracker.add_expense()
+
+        elif(choice==2):
+            tracker.show_all()
+
+        elif(choice==3):
+            tracker.filter_expense()
+
+
+        elif(choice==4):
+            tracker.edit_expense()
+
+        elif(choice==5):
+            tracker.delete_expense()
+
+        elif(choice==6):
+            tracker.search_total_expense_per_month()
+
+        elif(choice==7):
+            tracker.highest_expense_category()
+
+        elif(choice==8):
+            break
+
+        else:
+            print("invalid choice")
+
+if __name__ =="__main__":
+    main()
